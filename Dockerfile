@@ -3,7 +3,7 @@ MAINTAINER IP2Location <support@ip2location.com>
 
 # Install packages
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get -qy install mysql-server wget unzip
+RUN apt-get update && apt-get -qy install mariadb-server wget unzip
 
 # Add MySQL configuration
 ADD custom.cnf /etc/mysql/mariadb.conf.d/999-custom.cnf
