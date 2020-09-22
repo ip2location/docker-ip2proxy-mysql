@@ -3,17 +3,29 @@
 error() { echo -e "\e[91m$1\e[m"; exit 0; }
 success() { echo -e "\e[92m$1\e[m"; }
 
-if [ "$TOKEN" == "FALSE" ] || [ "$CODE" == "FALSE" ]; then
+if [ -f /config ]; then
 	exit 0
 fi
 
+if [ "$TOKEN" == "FALSE" ]; then
+	error "Missing download token."
+fi
+
+if [ "$CODE" == "FALSE" ]; then
+	error "Missing product code."
+fi
+
+if [ "$MYSQL_PASSWORD" == "FALSE" ]; then
+	error "Missing MySQL password."
+fi
+
 if [ -z "$(echo $CODE | grep 'PX')" ]; then
-	error "[INVALID CODE]"
+	error "Download code is invalid."
 fi
 
 echo -n " > Create directory /_tmp "
 
-rm -rf /_tmp && mkdir /_tmp
+mkdir /_tmp
 
 [ ! -d /_tmp ] && error "[ERROR]" || success "[OK]"
 
@@ -25,11 +37,11 @@ wget -O database.zip -q --user-agent="Docker-IP2Proxy/MySQL" http://www.ip2locat
 
 [ ! -f database.zip ] && error "[ERROR]"
 
-[ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[DENIED]"
+[ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[PERMISSION DENIED]"
 
 [ ! -z "$(grep '5 times' database.zip)" ] && error "[QUOTA EXCEEDED]"
 
-[ $(wc -c < database.zip) -lt 102400 ] && error "[ERROR]"
+[ $(wc -c < database.zip) -lt 102400 ] && error "[FILE CORRUPTED]"
 
 success "[OK]"
 
@@ -120,19 +132,21 @@ RESPONSE="$(mysql ip2proxy_database -e 'RENAME TABLE ip2proxy_database_tmp TO ip
 
 [ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
 
-DBPASS="$(< /dev/urandom tr -dc A-Za-z0-9 | head -c8)"
-
 echo " > [MySQL] Create MySQL user \"admin\""
 
-mysql -e "CREATE USER admin@'%' IDENTIFIED BY '$DBPASS'" > /dev/null 2>&1
+mysql -e "CREATE USER admin@'%' IDENTIFIED BY '$MYSQL_PASSWORD'" > /dev/null 2>&1
 mysql -e "GRANT ALL PRIVILEGES ON *.* TO admin@'%' WITH GRANT OPTION" > /dev/null 2>&1
 
 echo " > Setup completed"
 echo ""
 echo " > You can now connect to this MySQL Server using:"
 echo ""
-echo "   mysql -u admin -p$DBPASS ip2proxy_database"
+echo "   mysql -u admin -p$MYSQL_PASSWORD ip2proxy_database"
 echo ""
+
+echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" > /config
+echo "TOKEN=$TOKEN" >> /config
+echo "CODE=$CODE" >> /config
 
 rm -rf /_tmp
 

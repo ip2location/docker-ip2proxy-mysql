@@ -7,7 +7,7 @@ This is a pre-configured, ready-to-run MySQL server with IP2Proxy Proxy IP datab
 
 1. Run this image as daemon with your username, password, and download code registered from [IP2Location](https://www.ip2location.com).
 
-       docker run --name ip2proxy -d -e TOKEN=DOWNLOAD_TOKEN -e CODE=DOWNLOAD_CODE ip2proxy/mysql
+       docker run --name ip2proxy -d -e TOKEN={DOWNLOAD_TOKEN} -e CODE={DOWNLOAD_CODE} -e MYSQL_PASSWORD={MYSQL_PASSWORD} ip2proxy/mysql
 
     **ENV VARIABLE**
 
@@ -15,11 +15,13 @@ This is a pre-configured, ready-to-run MySQL server with IP2Proxy Proxy IP datab
 
     CODE – The CSV file download code (PX1... PX10). You may get the download code from your account panel.
 
+    MYSQL_PASSWORD - Password for MySQL admin.
+
 2. The installation may take minutes to hour depending on your internet speed and hardware. You may check the installation status by viewing the container logs. Run the below command to check the container log:
 
-        docker logs YOUR_CONTAINER_ID
+        docker logs -f ip2proxy
 
-    You should see the line of `=> Setup completed` if you have successfully complete the installation.
+    You should see the line of `> Setup completed` if you have successfully complete the installation.
 
 ### Connect to it from an application
 
@@ -30,6 +32,16 @@ This is a pre-configured, ready-to-run MySQL server with IP2Proxy Proxy IP datab
     mysql -u admin -pYOUR_MYSQL_PASSWORD -h ip2proxy-db ip2proxy_database -e 'SELECT * FROM `ip2proxy_database` WHERE INET_ATON("8.8.8.8") BETWEEN ip_from AND ip_to LIMIT 1'
 
 **Notes:** If not result returned, the lookup IP address is not a proxy IP address.
+
+
+
+### Update IP2Proxy Database
+
+To update your IP2Proxy database to latest version, please run the following  command:
+
+```
+docker exec -it ip2proxy ./update.sh
+```
 
 
 
