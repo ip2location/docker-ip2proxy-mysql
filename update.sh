@@ -27,7 +27,7 @@ wget -O database.zip -q --user-agent="Docker-IP2Proxy/MySQL" http://www.ip2locat
 
 [ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[DENIED]"
 
-[ ! -z "$(grep '5 times' database.zip)" ] && error "[QUOTA EXCEEDED]"
+[ ! -z "$(grep '5 TIMES' database.zip)" ] && error "[QUOTA EXCEEDED]"
 
 [ $(wc -c < database.zip) -lt 102400 ] && error "[FILE CORRUPTED]"
 
