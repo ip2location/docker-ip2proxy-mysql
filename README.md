@@ -13,7 +13,7 @@ This is a pre-configured, ready-to-run MySQL server with IP2Proxy Proxy IP datab
 
     TOKEN – Download token obtained from IP2Location.
 
-    CODE – The CSV file download code (PX1... PX10). You may get the download code from your account panel.
+    CODE – The CSV file download code (PX1... PX11). You may get the download code from your account panel.
 
     MYSQL_PASSWORD - Password for MySQL admin.
 
