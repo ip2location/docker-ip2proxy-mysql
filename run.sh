@@ -3,7 +3,7 @@
 error() { echo -e "\e[91m$1\e[m"; exit 0; }
 success() { echo -e "\e[92m$1\e[m"; }
 
-if [ ! -f /config ]; then
+if [ -f /config ]; then
 	/etc/init.d/mysql restart >/dev/null 2>&1
 	tail -f /dev/null
 fi
@@ -104,6 +104,10 @@ case "$CODE" in
 
 	PX10|PX10IPV6|PX10LITECSV|PX10LITECSVIPV6 )
 		FIELDS=',`proxy_type` VARCHAR(3) NOT NULL, `country_code` CHAR(2) NOT NULL,`country_name` VARCHAR(64) NOT NULL,`region_name` VARCHAR(128) NOT NULL,`city_name` VARCHAR(128) NOT NULL,`isp` VARCHAR(255) NOT NULL,`domain` VARCHAR(128) NOT NULL,`usage_type` VARCHAR(11) NOT NULL,`asn` VARCHAR(6) NOT NULL,`as` VARCHAR(256) NOT NULL,`last_seen` INT(10) NOT NULL, `threat` VARCHAR(128)'
+	;;
+
+	PX11|PX11IPV6|PX11LITECSV|PX11LITECSVIPV6 )
+		FIELDS=',`proxy_type` VARCHAR(3) NOT NULL, `country_code` CHAR(2) NOT NULL,`country_name` VARCHAR(64) NOT NULL,`region_name` VARCHAR(128) NOT NULL,`city_name` VARCHAR(128) NOT NULL,`isp` VARCHAR(255) NOT NULL,`domain` VARCHAR(128) NOT NULL,`usage_type` VARCHAR(11) NOT NULL,`asn` VARCHAR(6) NOT NULL,`as` VARCHAR(256) NOT NULL,`last_seen` INT(10) NOT NULL, `threat` VARCHAR(128),`provider` VARCHAR(256) NOT NULL'
 	;;
 esac
 
