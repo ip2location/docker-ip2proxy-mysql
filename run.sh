@@ -84,7 +84,7 @@ fi
 success "[OK]"
 
 for ZIP in $(ls | grep '.zip'); do
-	CSV=$(unzip -l $ZIP | grep '.CSV' | awk '{ print $4 }')
+	CSV=$(unzip -l $ZIP | grep -Eo 'IP2PROXY-IP(V6)?.*CSV')
 
 	echo -n " > Decompress $CSV from $ZIP "
 
@@ -160,7 +160,7 @@ RESPONSE="$(mysql ip2proxy_database -e 'CREATE TABLE ip2proxy_database_tmp (`ip_
 
 for CSV in $(ls | grep '.CSV'); do
 	echo -n " > [MySQL] Load $CSV into database "
-	RESPONSE="$(mysql ip2proxy_database -e 'LOAD DATA LOCAL INFILE '\'''$CSV''\'' INTO TABLE ip2proxy_database_tmp FIELDS TERMINATED BY '\'','\'' ENCLOSED BY '\''\"'\'' LINES TERMINATED BY '\''\r\n'\''' 2>&1)"
+	RESPONSE="$(mysql ip2proxy_database -e 'LOAD DATA LOCAL INFILE '\'''$CSV''\'' INTO TABLE ip2proxy_database_tmp FIELDS TERMINATED BY '\'','\'' ENCLOSED BY '\''\"'\'' LINES TERMINATED BY '\''\n'\''' 2>&1)"
 	[ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
 done
 
