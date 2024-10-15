@@ -1,8 +1,9 @@
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 LABEL maintainer="support@ip2location.com"
 
 # Install packages
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y mariadb-server wget unzip
 
 # Add MySQL configuration
@@ -14,13 +15,13 @@ ADD update.sh /update.sh
 RUN chmod 755 /*.sh
 
 # Exposed ENV
-ENV TOKEN FALSE
-ENV CODE FALSE
-ENV IP_TYPE FALSE
-ENV MYSQL_PASSWORD FALSE
+ENV TOKEN=FALSE
+ENV CODE=FALSE
+ENV IP_TYPE=FALSE
+ENV MYSQL_PASSWORD=FALSE
 
 # Add VOLUMEs
 VOLUME  ["/etc/mysql", "/var/lib/mysql"]
 
 EXPOSE 3306 33060
-CMD ["/run.sh"]
+CMD ["bash", "/run.sh"]

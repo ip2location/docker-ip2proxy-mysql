@@ -1,22 +1,23 @@
 #!/bin/bash
 
-error() { echo -e "\e[91m$1\e[m"; exit 0; }
-success() { echo -e "\e[92m$1\e[m"; }
+text_primary() { echo -n " $1 $(printf '\055%.0s' {1..70})" | head -c 70; echo -n ' '; }
+text_success() { printf "\e[00;92m%s\e[00m\n" "$1"; }
+text_danger() { printf "\e[00;91m%s\e[00m\n" "$1"; exit 0; }
 
 USER_AGENT="Mozilla/5.0+(compatible; IP2Proxy/MySQL-Docker; https://hub.docker.com/r/ip2proxy/mysql)"
 CODES=("PX1-LITE PX2-LITE PX3-LITE PX4-LITE PX5-LITE PX6-LITE PX7-LITE PX8-LITE PX9-LITE PX10-LITE PX11-LITE PX1 PX2 PX3 PX4 PX5 PX6 PX7 PX8 PX9 PX10 PX11")
 
 if [ -f /ip2proxy.conf ]; then
-	/etc/init.d/mysql restart >/dev/null 2>&1
+	/etc/init.d/mariadb restart >/dev/null 2>&1
 	tail -f /dev/null
 fi
 
 if [ "$TOKEN" == "FALSE" ]; then
-	error "Missing download token."
+	text_error "Missing download token."
 fi
 
 if [ "$CODE" == "FALSE" ]; then
-	error "Missing database code."
+	text_error "Missing database code."
 fi
 
 if [ "$MYSQL_PASSWORD" == "FALSE" ]; then
@@ -31,82 +32,67 @@ for i in "${CODES[@]}"; do
 done
 
 if [ -z $FOUND == "" ]; then
-	error "Download code is invalid."
+	text_error "Download code is invalid."
 fi
 
 CODE=$(echo $CODE | sed 's/-//')
 
-echo -n " > Create directory /_tmp "
+text_primary " > Create directory /_tmp "
 
 mkdir /_tmp
 
-[ ! -d /_tmp ] && error "[ERROR]" || success "[OK]"
+[ ! -d /_tmp ] && text_error "[ERROR]" || text_success "[OK]"
 
 cd /_tmp
 
-echo -n " > Download IP2Proxy database "
+text_primary " > Download IP2Proxy database "
 
 if [ "$IP_TYPE" == "IPV4" ]; then
 	wget -O ipv4.zip -q --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSV" > /dev/null 2>&1
 
-	[ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[DENIED]"
-	[ ! -z "$(grep '5 TIMES' database.zip)" ] && error "[QUOTA EXCEEDED]"
+	[ ! -z "$(grep 'NO PERMISSION' ipv4.zip)" ] && text_error "[DENIED]"
+	[ ! -z "$(grep '5 TIMES' ipv4.zip)" ] && text_error "[QUOTA EXCEEDED]"
 
 	RESULT=$(unzip -t ipv4.zip >/dev/null 2>&1)
 
-	[ $? -ne 0 ] && error "[FILE CORRUPTED]"
-elif [ "$IP_TYPE" == "IPV6" ]; then
-	wget -O ipv6.zip -q --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSVIPV6" > /dev/null 2>&1
-
-	[ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[DENIED]"
-	[ ! -z "$(grep '5 TIMES' database.zip)" ] && error "[QUOTA EXCEEDED]"
-
-	RESULT=$(unzip -t ipv6.zip >/dev/null 2>&1)
-
-	[ $? -ne 0 ] && error "[FILE CORRUPTED]"
+	[ $? -ne 0 ] && text_error "[FILE CORRUPTED]"
 else
-	wget -O ipv4.zip -q --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSV" > /dev/null 2>&1
 	wget -O ipv6.zip -q --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSVIPV6" > /dev/null 2>&1
 
-	[ ! -z "$(grep 'NO PERMISSION' ipv4.zip)" ] && error "[DENIED]"
-	[ ! -z "$(grep '5 TIMES' ipv4.zip)" ] && error "[QUOTA EXCEEDED]"
-
-	[ ! -z "$(grep 'NO PERMISSION' ipv6.zip)" ] && error "[DENIED]"
-	[ ! -z "$(grep '5 TIMES' ipv6.zip)" ] && error "[QUOTA EXCEEDED]"
-
-	RESULT=$(unzip -t ipv4.zip >/dev/null 2>&1)
-	[ $? -ne 0 ] && error "[FILE CORRUPTED]"
+	[ ! -z "$(grep 'NO PERMISSION' ipv6.zip)" ] && text_error "[DENIED]"
+	[ ! -z "$(grep '5 TIMES' ipv6.zip)" ] && text_error "[QUOTA EXCEEDED]"
 
 	RESULT=$(unzip -t ipv6.zip >/dev/null 2>&1)
-	[ $? -ne 0 ] && error "[FILE CORRUPTED]"
+
+	[ $? -ne 0 ] && text_error "[FILE CORRUPTED]"
 fi
 
-success "[OK]"
+text_success "[OK]"
 
 for ZIP in $(ls | grep '.zip'); do
 	CSV=$(unzip -l $ZIP | grep -Eo 'IP2PROXY-IP(V6)?.*CSV')
 
-	echo -n " > Decompress $CSV from $ZIP "
+	text_primary " > Decompress $CSV from $ZIP "
 
 	unzip -jq $ZIP $CSV
 
 	if [ ! -f $CSV ]; then
-		error "[ERROR]"
+		text_error "[ERROR]"
 	fi
 
-	success "[OK]"
+	text_success "[OK]"
 done
 
-/etc/init.d/mysql start > /dev/null 2>&1
+/etc/init.d/mariadb start > /dev/null 2>&1
 
-echo -n " > [MySQL] Create database \"ip2proxy_database\" "
-RESPONSE="$(mysql -e 'CREATE DATABASE IF NOT EXISTS ip2proxy_database' 2>&1)"
+text_primary " > [MySQL] Create database \"ip2proxy_database\" "
+RESPONSE="$(mariadb -e 'CREATE DATABASE IF NOT EXISTS ip2proxy_database' 2>&1)"
 
-[ ! -z "$(echo $RESPONSE)" ] && error "[$RESPONSE]" || success "[OK]"
+[ ! -z "$(echo $RESPONSE)" ] && text_error "[$RESPONSE]" || text_success "[OK]"
 
-echo -n " > [MySQL] Create table \"ip2proxy_database_tmp\" "
+text_primary " > [MySQL] Create table \"ip2proxy_database_tmp\" "
 
-RESPONSE="$(mysql ip2proxy_database -e 'DROP TABLE IF EXISTS ip2proxy_database_tmp' 2>&1)"
+RESPONSE="$(mariadb ip2proxy_database -e 'DROP TABLE IF EXISTS ip2proxy_database_tmp' 2>&1)"
 
 case "$CODE" in
 	PX1|PX1LITE )
@@ -154,38 +140,38 @@ case "$CODE" in
 	;;
 esac
 
-RESPONSE="$(mysql ip2proxy_database -e 'CREATE TABLE ip2proxy_database_tmp (`ip_from` DECIMAL(39,0) UNSIGNED NOT NULL,`ip_to` DECIMAL(39,0) UNSIGNED NOT NULL'"$FIELDS"',INDEX `idx_ip_to` (`ip_to`)) ENGINE=MyISAM' 2>&1)"
+RESPONSE="$(mariadb ip2proxy_database -e 'CREATE TABLE ip2proxy_database_tmp (`ip_from` DECIMAL(39,0) UNSIGNED NOT NULL,`ip_to` DECIMAL(39,0) UNSIGNED NOT NULL'"$FIELDS"',INDEX `idx_ip_to` (`ip_to`)) ENGINE=MyISAM' 2>&1)"
 
-[ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
+[ ! -z "$(echo $RESPONSE)" ] && text_error "[ERROR]" || text_success "[OK]"
 
 for CSV in $(ls | grep '.CSV'); do
-	echo -n " > [MySQL] Load $CSV into database "
-	RESPONSE="$(mysql ip2proxy_database -e 'LOAD DATA LOCAL INFILE '\'''$CSV''\'' INTO TABLE ip2proxy_database_tmp FIELDS TERMINATED BY '\'','\'' ENCLOSED BY '\''\"'\'' LINES TERMINATED BY '\''\n'\''' 2>&1)"
-	[ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
+	text_primary " > [MySQL] Load $CSV into database "
+	RESPONSE="$(mariadb ip2proxy_database -e 'LOAD DATA LOCAL INFILE '\'''$CSV''\'' INTO TABLE ip2proxy_database_tmp FIELDS TERMINATED BY '\'','\'' ENCLOSED BY '\''\"'\'' LINES TERMINATED BY '\''\n'\''' 2>&1)"
+	[ ! -z "$(echo $RESPONSE)" ] && text_error "[ERROR]" || text_success "[OK]"
 done
 
-echo -n " > [MySQL] Drop table \"ip2proxy_database\" "
+text_primary ' > [MySQL] Drop table "ip2proxy_database" '
 
-RESPONSE="$(mysql ip2proxy_database -e 'DROP TABLE IF EXISTS ip2proxy_database' 2>&1)"
+RESPONSE="$(mariadb ip2proxy_database -e 'DROP TABLE IF EXISTS ip2proxy_database' 2>&1)"
 
-[ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
+[ ! -z "$(echo $RESPONSE)" ] && text_error "[ERROR]" || text_success "[OK]"
 
-echo -n " > [MySQL] Rename table \"ip2proxy_database_tmp\" to \"ip2proxy_database\" "
+text_primary " > [MySQL] Rename table \"ip2proxy_database_tmp\" to \"ip2proxy_database\" "
 
-RESPONSE="$(mysql ip2proxy_database -e 'RENAME TABLE ip2proxy_database_tmp TO ip2proxy_database' 2>&1)"
+RESPONSE="$(mariadb ip2proxy_database -e 'RENAME TABLE ip2proxy_database_tmp TO ip2proxy_database' 2>&1)"
 
-[ ! -z "$(echo $RESPONSE)" ] && error "[ERROR]" || success "[OK]"
+[ ! -z "$(echo $RESPONSE)" ] && text_error "[ERROR]" || text_success "[OK]"
 
-echo " > [MySQL] Create MySQL user \"admin\""
+echo ' > [MySQL] Create MySQL user "admin"'
 
-mysql -e "CREATE USER admin@'%' IDENTIFIED BY '$MYSQL_PASSWORD'" > /dev/null 2>&1
-mysql -e "GRANT ALL PRIVILEGES ON *.* TO admin@'%' WITH GRANT OPTION" > /dev/null 2>&1
+mariadb -e "CREATE USER admin@'%' IDENTIFIED BY '$MYSQL_PASSWORD'" > /dev/null 2>&1
+mariadb -e "GRANT ALL PRIVILEGES ON *.* TO admin@'%' WITH GRANT OPTION" > /dev/null 2>&1
 
 echo " > Setup completed"
 echo ""
 echo " > You can now connect to this MySQL Server using:"
 echo ""
-echo "   mysql -u admin -p$MYSQL_PASSWORD ip2proxy_database"
+echo "   mariadb -u admin -p$MYSQL_PASSWORD ip2proxy_database"
 echo ""
 
 echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" > /ip2proxy.conf
