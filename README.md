@@ -15,8 +15,8 @@ This is a pre-configured, ready-to-run MySQL server with IP2Proxy Proxy IP datab
 
     CODE – Database code. Codes available as below:
 
-   * Free Database - PX1-LITE, PX2-LITE, PX3-LITE, PX4-LITE, PX5-LITE, PX6-LITE, PX7-LITE, PX8-LITE, PX9-LITE, PX10-LITE, PX11-LITE
-   * Commercial Database - PX1, PX2, PX3, PX4, PX5, PX6, PX7, PX8, PX9, PX10, PX11
+   * Free Database - PX1-LITE, PX2-LITE, PX3-LITE, PX4-LITE, PX5-LITE, PX6-LITE, PX7-LITE, PX8-LITE, PX9-LITE, PX10-LITE, PX11-LITE, PX12-LITE
+   * Commercial Database - PX1, PX2, PX3, PX4, PX5, PX6, PX7, PX8, PX9, PX10, PX11, PX12
 
    IP_TYPE - (Optional) Download IPv4, IPv6 or both database. Script will download both database by default.
 
